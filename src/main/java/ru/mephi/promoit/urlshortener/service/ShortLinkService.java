@@ -35,13 +35,14 @@ public class ShortLinkService {
     private final LinkProperties linkProperties;
     private final AppProperties appProperties;
     private final Clock clock;
+    private final NotificationService notificationService;
 
     public ShortLinkService(
             UserRepository userRepository,
             ShortLinkRepository shortLinkRepository,
             ShortCodeGenerator codeGenerator,
             LinkProperties linkProperties, AppProperties appProperties,
-            Clock clock
+            Clock clock, NotificationService notificationService
     ) {
         this.userRepository = userRepository;
         this.shortLinkRepository = shortLinkRepository;
@@ -49,6 +50,7 @@ public class ShortLinkService {
         this.linkProperties = linkProperties;
         this.appProperties = appProperties;
         this.clock = clock;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -98,6 +100,13 @@ public class ShortLinkService {
         if (updatedRows == 0) {
             throw new LinkUnavailableException(
                     "Short link is expired or click limit is reached"
+            );
+        }
+
+        if (shortLinkRepository.isClickLimitReached(code)) {
+            notificationService.notifyLimitReached(
+                    link.getUser().getId(),
+                    code
             );
         }
 

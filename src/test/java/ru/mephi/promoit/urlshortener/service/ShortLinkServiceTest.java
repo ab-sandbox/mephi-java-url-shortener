@@ -34,6 +34,8 @@ class ShortLinkServiceTest {
     private ShortLinkRepository shortLinkRepository;
     @Mock
     private ShortCodeGenerator codeGenerator;
+    @Mock
+    private NotificationService notificationService;
 
     private ShortLinkService shortLinkService;
 
@@ -57,7 +59,8 @@ class ShortLinkServiceTest {
                 codeGenerator,
                 linkProperties,
                 appProperties,
-                clock
+                clock,
+                notificationService
         );
     }
 

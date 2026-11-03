@@ -47,4 +47,11 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
             @Param("userId") UUID userId,
             @Param("clickLimit") int clickLimit
     );
+
+    @Query("""
+            SELECT l.clickCount = l.clickLimit
+            FROM ShortLink l
+            WHERE l.code = :code
+            """)
+    boolean isClickLimitReached(@Param("code") String code);
 }
