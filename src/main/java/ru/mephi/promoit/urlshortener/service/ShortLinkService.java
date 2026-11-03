@@ -15,6 +15,7 @@ import ru.mephi.promoit.urlshortener.repository.UserRepository;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -67,15 +68,7 @@ public class ShortLinkService {
 
         ShortLink savedLink = shortLinkRepository.save(link);
 
-        return new LinkResponse(
-                savedLink.getCode(),
-                appProperties.baseUrl().resolve("/" + savedLink.getCode()).toString(),
-                savedLink.getOriginalUrl(),
-                savedLink.getClickLimit(),
-                savedLink.getClickCount(),
-                savedLink.getExpiresAt(),
-                user.getId()
-        );
+        return toResponse(savedLink);
     }
 
     @Transactional
@@ -102,6 +95,18 @@ public class ShortLinkService {
         }
 
         return URI.create(link.getOriginalUrl());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LinkResponse> getUserLinks(UUID userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NoSuchElementException("User not found");
+        }
+
+        return shortLinkRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private User resolveUser(UUID userId, Instant now) {
@@ -152,5 +157,17 @@ public class ShortLinkService {
                     exception
             );
         }
+    }
+
+    private LinkResponse toResponse(ShortLink link) {
+        return new LinkResponse(
+                link.getCode(),
+                appProperties.baseUrl().resolve("/" + link.getCode()).toString(),
+                link.getOriginalUrl(),
+                link.getClickLimit(),
+                link.getClickCount(),
+                link.getExpiresAt(),
+                link.getUser().getId()
+        );
     }
 }

@@ -7,6 +7,7 @@ import ru.mephi.promoit.urlshortener.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.dto.LinkResponse;
 import ru.mephi.promoit.urlshortener.service.ShortLinkService;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,5 +27,12 @@ public class ShortLinkController {
             @RequestHeader(value = "X-User-Id", required = false) UUID userId
     ) {
         return shortLinkService.createLink(request, userId);
+    }
+
+    @GetMapping
+    public List<LinkResponse> getUserLinks(
+            @RequestHeader("X-User-Id") UUID userId
+    ) {
+        return shortLinkService.getUserLinks(userId);
     }
 }

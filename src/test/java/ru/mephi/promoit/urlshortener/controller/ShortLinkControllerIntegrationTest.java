@@ -1,27 +1,27 @@
 package ru.mephi.promoit.urlshortener.controller;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.mephi.promoit.urlshortener.config.TestcontainersConfig;
 import ru.mephi.promoit.urlshortener.model.ShortLink;
+import ru.mephi.promoit.urlshortener.model.User;
 import ru.mephi.promoit.urlshortener.repository.ShortLinkRepository;
+import ru.mephi.promoit.urlshortener.repository.UserRepository;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
+import java.util.concurrent.*;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -39,6 +39,8 @@ class ShortLinkControllerIntegrationTest {
     private ObjectMapper objectMapper;
     @Autowired
     private ShortLinkRepository shortLinkRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void shouldCreateLinkAndEnforceClickLimit() throws Exception {
@@ -179,5 +181,56 @@ class ShortLinkControllerIntegrationTest {
             start.countDown();
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void shouldReturnUserLinks() throws Exception {
+        String responseBody = mockMvc.perform(post("/api/links")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "originalUrl": "https://example.com",
+                                  "clickLimit": 5
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode createdLink = objectMapper.readTree(responseBody);
+        String userId = createdLink.get("userId").asText();
+        String code = createdLink.get("code").asText();
+
+        mockMvc.perform(get("/api/links")
+                        .header("X-User-Id", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].code").value(code))
+                .andExpect(jsonPath("$[0].originalUrl")
+                        .value("https://example.com"))
+                .andExpect(jsonPath("$[0].clickLimit").value(5))
+                .andExpect(jsonPath("$[0].clickCount").value(0));
+    }
+
+    @Test
+    void shouldReturnEmptyListForUserWithoutLinks() throws Exception {
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setCreatedAt(Instant.now());
+
+        userRepository.save(user);
+
+        mockMvc.perform(get("/api/links")
+                        .header("X-User-Id", user.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void shouldReturnNotFoundForUnknownUser() throws Exception {
+        mockMvc.perform(get("/api/links")
+                        .header("X-User-Id", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
     }
 }
