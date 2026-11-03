@@ -24,8 +24,7 @@ import java.util.concurrent.*;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -112,22 +111,8 @@ class ShortLinkControllerIntegrationTest {
 
     @Test
     void shouldNotExceedClickLimitUnderConcurrentRequests() throws Exception {
-        String responseBody = mockMvc.perform(post("/api/links")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "originalUrl": "https://example.com",
-                                  "clickLimit": 1
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        String code = objectMapper.readTree(responseBody)
-                .get("code")
-                .asText();
+        JsonNode createdLink = createLink(1);
+        String code = createdLink.get("code").asText();
 
         int requestCount = 10;
         CountDownLatch ready = new CountDownLatch(requestCount);
@@ -185,20 +170,8 @@ class ShortLinkControllerIntegrationTest {
 
     @Test
     void shouldReturnUserLinks() throws Exception {
-        String responseBody = mockMvc.perform(post("/api/links")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "originalUrl": "https://example.com",
-                                  "clickLimit": 5
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        JsonNode createdLink = createLink(5);
 
-        JsonNode createdLink = objectMapper.readTree(responseBody);
         String userId = createdLink.get("userId").asText();
         String code = createdLink.get("code").asText();
 
@@ -232,5 +205,116 @@ class ShortLinkControllerIntegrationTest {
         mockMvc.perform(get("/api/links")
                         .header("X-User-Id", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldUpdateClickLimit() throws Exception {
+        JsonNode createdLink = createLink(5);
+
+        String code = createdLink.get("code").asText();
+        String userId = createdLink.get("userId").asText();
+
+        mockMvc.perform(patch("/api/links/{code}", code)
+                        .header("X-User-Id", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "clickLimit": 10
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(code))
+                .andExpect(jsonPath("$.clickLimit").value(10))
+                .andExpect(jsonPath("$.clickCount").value(0));
+
+        ShortLink link = shortLinkRepository.findByCode(code)
+                .orElseThrow();
+
+        assertEquals(10, link.getClickLimit());
+    }
+
+    @Test
+    void shouldNotUpdateAnotherUsersLink() throws Exception {
+        JsonNode createdLink = createLink(5);
+        String code = createdLink.get("code").asText();
+
+        mockMvc.perform(patch("/api/links/{code}", code)
+                        .header("X-User-Id", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "clickLimit": 10
+                                }
+                                """))
+                .andExpect(status().isNotFound());
+
+        ShortLink link = shortLinkRepository.findByCode(code)
+                .orElseThrow();
+
+        assertEquals(5, link.getClickLimit());
+    }
+
+    @Test
+    void shouldRejectInvalidClickLimit() throws Exception {
+        JsonNode createdLink = createLink(5);
+
+        mockMvc.perform(patch("/api/links/{code}",
+                        createdLink.get("code").asText())
+                        .header("X-User-Id",
+                                createdLink.get("userId").asText())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "clickLimit": 0
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldRejectClickLimitBelowCurrentCount() throws Exception {
+        JsonNode createdLink = createLink(5);
+
+        String code = createdLink.get("code").asText();
+        String userId = createdLink.get("userId").asText();
+
+        mockMvc.perform(get("/{code}", code))
+                .andExpect(status().isFound());
+
+        mockMvc.perform(get("/{code}", code))
+                .andExpect(status().isFound());
+
+        mockMvc.perform(patch("/api/links/{code}", code)
+                        .header("X-User-Id", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "clickLimit": 1
+                                }
+                                """))
+                .andExpect(status().isConflict());
+
+        ShortLink link = shortLinkRepository.findByCode(code)
+                .orElseThrow();
+
+        assertEquals(5, link.getClickLimit());
+        assertEquals(2, link.getClickCount());
+    }
+
+    private JsonNode createLink(int clickLimit) throws Exception {
+        String responseBody = mockMvc.perform(post("/api/links")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "originalUrl": "https://example.com",
+                                  "clickLimit": %d
+                                }
+                                """.formatted(clickLimit)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readTree(responseBody);
     }
 }

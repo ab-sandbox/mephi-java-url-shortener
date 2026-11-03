@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.mephi.promoit.urlshortener.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.dto.LinkResponse;
+import ru.mephi.promoit.urlshortener.dto.UpdateLinkRequest;
 import ru.mephi.promoit.urlshortener.service.ShortLinkService;
 
 import java.util.List;
@@ -34,5 +35,14 @@ public class ShortLinkController {
             @RequestHeader("X-User-Id") UUID userId
     ) {
         return shortLinkService.getUserLinks(userId);
+    }
+
+    @PatchMapping("/{code}")
+    public LinkResponse updateClickLimit(
+            @PathVariable String code,
+            @RequestHeader("X-User-Id") UUID userId,
+            @Valid @RequestBody UpdateLinkRequest request
+    ) {
+        return shortLinkService.updateClickLimit(code, userId, request);
     }
 }

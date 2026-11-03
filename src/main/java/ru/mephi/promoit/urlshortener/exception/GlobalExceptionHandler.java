@@ -25,4 +25,11 @@ public class GlobalExceptionHandler {
                 exception.getMessage()
         );
     }
+
+    @ExceptionHandler(LinkConflictException.class)
+    public ProblemDetail handleLinkConflict(LinkConflictException exception) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        problem.setDetail(exception.getMessage());
+        return problem;
+    }
 }

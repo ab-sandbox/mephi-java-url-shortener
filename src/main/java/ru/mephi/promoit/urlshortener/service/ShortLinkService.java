@@ -1,11 +1,15 @@
 package ru.mephi.promoit.urlshortener.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.mephi.promoit.urlshortener.config.AppProperties;
 import ru.mephi.promoit.urlshortener.config.LinkProperties;
 import ru.mephi.promoit.urlshortener.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.dto.LinkResponse;
+import ru.mephi.promoit.urlshortener.dto.UpdateLinkRequest;
+import ru.mephi.promoit.urlshortener.exception.LinkConflictException;
 import ru.mephi.promoit.urlshortener.exception.LinkUnavailableException;
 import ru.mephi.promoit.urlshortener.model.ShortLink;
 import ru.mephi.promoit.urlshortener.model.User;
@@ -21,6 +25,9 @@ import java.util.UUID;
 
 @Service
 public class ShortLinkService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final UserRepository userRepository;
     private final ShortLinkRepository shortLinkRepository;
@@ -107,6 +114,34 @@ public class ShortLinkService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public LinkResponse updateClickLimit(
+            String code,
+            UUID userId,
+            UpdateLinkRequest request
+    ) {
+        ShortLink link = shortLinkRepository.findByCode(code)
+                .filter(existing -> existing.getUser().getId().equals(userId))
+                .orElseThrow(() -> new NoSuchElementException("Link not found"));
+
+        int updatedRows = shortLinkRepository.updateClickLimit(
+                code,
+                userId,
+                request.clickLimit()
+        );
+
+        if (updatedRows == 0) {
+            throw new LinkConflictException(
+                    "Click limit cannot be less than the current click count"
+            );
+        }
+
+        // Обновляем состояние после native SQL UPDATE.
+        entityManager.refresh(link);
+
+        return toResponse(link);
     }
 
     private User resolveUser(UUID userId, Instant now) {

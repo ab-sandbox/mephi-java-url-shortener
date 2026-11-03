@@ -33,4 +33,18 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
     );
 
     List<ShortLink> findByExpiresAtLessThanEqual(Instant now);
+
+    @Modifying
+    @Query(value = """
+            UPDATE short_links
+            SET click_limit = :clickLimit
+            WHERE code = :code
+              AND user_id = :userId
+              AND click_count <= :clickLimit
+            """, nativeQuery = true)
+    int updateClickLimit(
+            @Param("code") String code,
+            @Param("userId") UUID userId,
+            @Param("clickLimit") int clickLimit
+    );
 }
