@@ -45,4 +45,13 @@ public class ShortLinkController {
     ) {
         return shortLinkService.updateClickLimit(code, userId, request);
     }
+
+    @DeleteMapping("/{code}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLink(
+            @PathVariable String code,
+            @RequestHeader("X-User-Id") UUID userId
+    ) {
+        shortLinkService.deleteLink(code, userId);
+    }
 }

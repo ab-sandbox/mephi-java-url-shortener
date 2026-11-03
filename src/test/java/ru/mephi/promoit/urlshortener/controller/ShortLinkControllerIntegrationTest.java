@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -299,6 +301,41 @@ class ShortLinkControllerIntegrationTest {
 
         assertEquals(5, link.getClickLimit());
         assertEquals(2, link.getClickCount());
+    }
+
+    @Test
+    void shouldDeleteLink() throws Exception {
+        JsonNode link = createLink(5);
+        String code = link.get("code").asText();
+        UUID userId = UUID.fromString(link.get("userId").asText());
+
+        mockMvc.perform(delete("/api/links/{code}", code)
+                        .header("X-User-Id", userId))
+                .andExpect(status().isNoContent());
+
+        assertThat(shortLinkRepository.findByCode(code)).isEmpty();
+
+        mockMvc.perform(get("/{code}", code))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldNotDeleteAnotherUsersLink() throws Exception {
+        JsonNode link = createLink(5);
+        String code = link.get("code").asText();
+
+        mockMvc.perform(delete("/api/links/{code}", code)
+                        .header("X-User-Id", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+
+        assertThat(shortLinkRepository.findByCode(code)).isPresent();
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingUnknownLink() throws Exception {
+        mockMvc.perform(delete("/api/links/{code}", "unknown123")
+                        .header("X-User-Id", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
     }
 
     private JsonNode createLink(int clickLimit) throws Exception {

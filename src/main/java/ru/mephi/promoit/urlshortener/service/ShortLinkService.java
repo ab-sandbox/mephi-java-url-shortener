@@ -144,6 +144,15 @@ public class ShortLinkService {
         return toResponse(link);
     }
 
+    @Transactional
+    public void deleteLink(String code, UUID userId) {
+        ShortLink link = shortLinkRepository.findByCode(code)
+                .filter(existing -> existing.getUser().getId().equals(userId))
+                .orElseThrow(() -> new NoSuchElementException("Link not found"));
+
+        shortLinkRepository.delete(link);
+    }
+
     private User resolveUser(UUID userId, Instant now) {
         if (userId == null) {
             User user = new User(UUID.randomUUID(), now);
