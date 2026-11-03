@@ -24,3 +24,4 @@ app:
   links:
     ttl: 24h
     code-length: 8
+    cleanup-interval: 1m

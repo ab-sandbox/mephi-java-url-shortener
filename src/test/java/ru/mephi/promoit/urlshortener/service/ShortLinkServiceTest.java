@@ -140,7 +140,6 @@ class ShortLinkServiceTest {
         verifyNoInteractions(userRepository, shortLinkRepository);
     }
 
-
     @Test
     void shouldResolveAvailableLink() {
         User user = new User(UUID.randomUUID(), NOW);
