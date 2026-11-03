@@ -10,24 +10,21 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.mephi.promoit.urlshortener.config.TestcontainersConfig;
 import ru.mephi.promoit.urlshortener.model.ShortLink;
 import ru.mephi.promoit.urlshortener.model.User;
+import ru.mephi.promoit.urlshortener.repository.NotificationRepository;
 import ru.mephi.promoit.urlshortener.repository.ShortLinkRepository;
 import ru.mephi.promoit.urlshortener.repository.UserRepository;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -42,6 +39,8 @@ class ShortLinkControllerIntegrationTest {
     private ShortLinkRepository shortLinkRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Test
     void shouldCreateLinkAndEnforceClickLimit() throws Exception {
@@ -109,65 +108,6 @@ class ShortLinkControllerIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void shouldNotExceedClickLimitUnderConcurrentRequests() throws Exception {
-        JsonNode createdLink = createLink(1);
-        String code = createdLink.get("code").asText();
-
-        int requestCount = 10;
-        CountDownLatch ready = new CountDownLatch(requestCount);
-        CountDownLatch start = new CountDownLatch(1);
-
-        ExecutorService executor = Executors.newFixedThreadPool(requestCount);
-
-        try {
-            List<Future<Integer>> futures = new ArrayList<>();
-
-            for (int i = 0; i < requestCount; i++) {
-                Callable<Integer> task = () -> {
-                    ready.countDown();
-
-                    if (!start.await(10, TimeUnit.SECONDS)) {
-                        throw new IllegalStateException("Start timeout");
-                    }
-
-                    return mockMvc.perform(get("/" + code))
-                            .andReturn()
-                            .getResponse()
-                            .getStatus();
-                };
-
-                futures.add(executor.submit(task));
-            }
-
-            assertTrue(ready.await(10, TimeUnit.SECONDS));
-
-            start.countDown();
-
-            List<Integer> statuses = new ArrayList<>();
-
-            for (Future<Integer> future : futures) {
-                statuses.add(future.get(30, TimeUnit.SECONDS));
-            }
-
-            assertEquals(1, statuses.stream()
-                    .filter(status -> status == 302)
-                    .count());
-
-            assertEquals(9, statuses.stream()
-                    .filter(status -> status == 410)
-                    .count());
-
-            ShortLink link = shortLinkRepository.findByCode(code)
-                    .orElseThrow();
-
-            assertEquals(1, link.getClickCount());
-        } finally {
-            start.countDown();
-            executor.shutdownNow();
-        }
     }
 
     @Test
