@@ -6,6 +6,7 @@ import ru.mephi.promoit.urlshortener.config.AppProperties;
 import ru.mephi.promoit.urlshortener.config.LinkProperties;
 import ru.mephi.promoit.urlshortener.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.dto.LinkResponse;
+import ru.mephi.promoit.urlshortener.exception.LinkUnavailableException;
 import ru.mephi.promoit.urlshortener.model.ShortLink;
 import ru.mephi.promoit.urlshortener.model.User;
 import ru.mephi.promoit.urlshortener.repository.ShortLinkRepository;
@@ -14,6 +15,7 @@ import ru.mephi.promoit.urlshortener.repository.UserRepository;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -74,6 +76,32 @@ public class ShortLinkService {
                 savedLink.getExpiresAt(),
                 user.getId()
         );
+    }
+
+    @Transactional
+    public URI resolveLink(String code) {
+        ShortLink link = shortLinkRepository.findByCode(code)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Short link not found: " + code
+                ));
+
+        Instant now = clock.instant();
+
+        if (link.isExpired(now) || link.isLimitReached()) {
+            throw new LinkUnavailableException(
+                    "Short link is expired or click limit is reached"
+            );
+        }
+
+        int updatedRows = shortLinkRepository.incrementClickCount(code, now);
+
+        if (updatedRows == 0) {
+            throw new LinkUnavailableException(
+                    "Short link is expired or click limit is reached"
+            );
+        }
+
+        return URI.create(link.getOriginalUrl());
     }
 
     private User resolveUser(UUID userId, Instant now) {

@@ -3,7 +3,6 @@ package ru.mephi.promoit.urlshortener.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.mephi.promoit.urlshortener.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.dto.LinkResponse;
 import ru.mephi.promoit.urlshortener.service.ShortLinkService;

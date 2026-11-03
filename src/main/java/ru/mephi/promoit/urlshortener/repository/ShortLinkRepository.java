@@ -19,7 +19,7 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
 
     List<ShortLink> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Modifying
     @Query(value = """
             UPDATE short_links
             SET click_count = click_count + 1
