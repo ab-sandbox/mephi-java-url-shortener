@@ -89,4 +89,8 @@ public class UrlShortenerClient {
                 new TypeReference<List<LinkResponse>>() {}
         );
     }
+
+    public URI getShortUrl(String code) {
+        return baseUrl.resolve("/" + code);
+    }
 }

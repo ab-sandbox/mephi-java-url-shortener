@@ -164,6 +164,16 @@ class UrlShortenerClientTest {
         assertTrue(exception.getMessage().contains("HTTP 500"));
     }
 
+    @Test
+    void shouldBuildShortUrl() {
+        URI shortUrl = client.getShortUrl("abc123");
+
+        assertEquals(
+                URI.create("http://localhost:" + server.getAddress().getPort() + "/abc123"),
+                shortUrl
+        );
+    }
+
     private void sendResponse(
             HttpExchange exchange,
             int status,
