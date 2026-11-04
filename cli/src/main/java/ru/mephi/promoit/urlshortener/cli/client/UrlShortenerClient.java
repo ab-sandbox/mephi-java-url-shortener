@@ -2,6 +2,7 @@ package ru.mephi.promoit.urlshortener.cli.client;
 
 import ru.mephi.promoit.urlshortener.cli.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.cli.dto.LinkResponse;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.UUID;
 
 public class UrlShortenerClient {
@@ -56,6 +58,35 @@ public class UrlShortenerClient {
         return objectMapper.readValue(
                 response.body(),
                 LinkResponse.class
+        );
+    }
+
+    public List<LinkResponse> listLinks(UUID userId)
+            throws IOException, InterruptedException {
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(baseUrl.resolve("/api/links"))
+                .header("X-User-Id", userId.toString())
+                .GET()
+                .build();
+
+        HttpResponse<String> response = httpClient.send(
+                request,
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        if (response.statusCode() != 200) {
+            throw new IOException(
+                    "Failed to list links: HTTP "
+                    + response.statusCode()
+                    + " - "
+                    + response.body()
+            );
+        }
+
+        return objectMapper.readValue(
+                response.body(),
+                new TypeReference<List<LinkResponse>>() {}
         );
     }
 }

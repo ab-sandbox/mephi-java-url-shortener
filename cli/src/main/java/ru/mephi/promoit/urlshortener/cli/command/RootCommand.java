@@ -5,10 +5,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "url-shortener",
         description = "URL Shortener command-line client",
-        mixinStandardHelpOptions = true,
-        subcommands = {
-                CreateLinkCommand.class
-        }
+        mixinStandardHelpOptions = true
 )
 public class RootCommand implements Runnable {
 

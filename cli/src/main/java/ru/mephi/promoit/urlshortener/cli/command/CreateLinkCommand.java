@@ -7,7 +7,6 @@ import ru.mephi.promoit.urlshortener.cli.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.cli.dto.LinkResponse;
 import ru.mephi.promoit.urlshortener.cli.session.UserSession;
 
-import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -17,6 +16,9 @@ import java.util.concurrent.Callable;
         mixinStandardHelpOptions = true
 )
 public class CreateLinkCommand implements Callable<Integer> {
+
+    private final UrlShortenerClient client;
+    private final UserSession userSession;
 
     @Option(
             names = {"-u", "--url"},
@@ -32,18 +34,16 @@ public class CreateLinkCommand implements Callable<Integer> {
     )
     private int limit;
 
+    public CreateLinkCommand(UrlShortenerClient client, UserSession userSession) {
+        this.client = client;
+        this.userSession = userSession;
+    }
+
     @Override
     public Integer call() throws Exception {
-        UrlShortenerClient client = new UrlShortenerClient(
-                URI.create("http://localhost:8080")
-        );
-
-        UserSession userSession = new UserSession();
-
         UUID userId = userSession.getUserId().orElse(null);
 
         CreateLinkRequest request = new CreateLinkRequest(url, limit);
-
         LinkResponse response = client.createLink(request, userId);
 
         if (userId == null) {
