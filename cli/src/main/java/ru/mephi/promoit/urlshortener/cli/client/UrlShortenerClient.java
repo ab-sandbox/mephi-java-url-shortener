@@ -2,6 +2,7 @@ package ru.mephi.promoit.urlshortener.cli.client;
 
 import ru.mephi.promoit.urlshortener.cli.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.cli.dto.LinkResponse;
+import ru.mephi.promoit.urlshortener.cli.dto.UpdateLinkRequest;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
@@ -86,11 +87,68 @@ public class UrlShortenerClient {
 
         return objectMapper.readValue(
                 response.body(),
-                new TypeReference<List<LinkResponse>>() {}
+                new TypeReference<List<LinkResponse>>() {
+                }
         );
     }
 
     public URI getShortUrl(String code) {
         return baseUrl.resolve("/" + code);
+    }
+
+    public LinkResponse updateLink(
+            String code,
+            UpdateLinkRequest request,
+            UUID userId
+    ) throws IOException, InterruptedException {
+
+        String json = objectMapper.writeValueAsString(request);
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(baseUrl.resolve("/api/links/" + code))
+                .header("Content-Type", "application/json")
+                .header("X-User-Id", userId.toString())
+                .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(
+                httpRequest,
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        if (response.statusCode() != 200) {
+            throw new IOException(
+                    "Failed to update link: HTTP "
+                    + response.statusCode()
+                    + " - "
+                    + response.body()
+            );
+        }
+
+        return objectMapper.readValue(response.body(), LinkResponse.class);
+    }
+
+    public void deleteLink(String code, UUID userId)
+            throws IOException, InterruptedException {
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(baseUrl.resolve("/api/links/" + code))
+                .header("X-User-Id", userId.toString())
+                .DELETE()
+                .build();
+
+        HttpResponse<String> response = httpClient.send(
+                request,
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        if (response.statusCode() != 204) {
+            throw new IOException(
+                    "Failed to delete link: HTTP "
+                    + response.statusCode()
+                    + " - "
+                    + response.body()
+            );
+        }
     }
 }

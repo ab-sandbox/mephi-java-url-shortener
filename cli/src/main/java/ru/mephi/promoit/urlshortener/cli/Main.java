@@ -3,10 +3,7 @@ package ru.mephi.promoit.urlshortener.cli;
 import picocli.CommandLine;
 import ru.mephi.promoit.urlshortener.cli.browser.DesktopBrowserLauncher;
 import ru.mephi.promoit.urlshortener.cli.client.UrlShortenerClient;
-import ru.mephi.promoit.urlshortener.cli.command.CreateLinkCommand;
-import ru.mephi.promoit.urlshortener.cli.command.ListLinksCommand;
-import ru.mephi.promoit.urlshortener.cli.command.OpenLinkCommand;
-import ru.mephi.promoit.urlshortener.cli.command.RootCommand;
+import ru.mephi.promoit.urlshortener.cli.command.*;
 import ru.mephi.promoit.urlshortener.cli.session.UserSession;
 
 import java.net.URI;
@@ -26,7 +23,9 @@ public class Main {
                 .addSubcommand(new OpenLinkCommand(
                         client,
                         new DesktopBrowserLauncher()
-                ));
+                ))
+                .addSubcommand(new UpdateLinkCommand(client, userSession))
+                .addSubcommand(new DeleteLinkCommand(client, userSession));
 
         int exitCode = commandLine.execute(args);
         System.exit(exitCode);

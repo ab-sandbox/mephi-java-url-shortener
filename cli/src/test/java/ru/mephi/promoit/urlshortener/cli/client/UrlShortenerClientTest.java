@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.mephi.promoit.urlshortener.cli.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.cli.dto.LinkResponse;
+import ru.mephi.promoit.urlshortener.cli.dto.UpdateLinkRequest;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -172,6 +173,80 @@ class UrlShortenerClientTest {
                 URI.create("http://localhost:" + server.getAddress().getPort() + "/abc123"),
                 shortUrl
         );
+    }
+
+    @Test
+    void shouldUpdateLink() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        AtomicReference<String> receivedMethod = new AtomicReference<>();
+        AtomicReference<String> receivedUserId = new AtomicReference<>();
+        AtomicReference<UpdateLinkRequest> receivedBody = new AtomicReference<>();
+
+        server.createContext("/api/links/abc123", exchange -> {
+            receivedMethod.set(exchange.getRequestMethod());
+            receivedUserId.set(
+                    exchange.getRequestHeaders().getFirst("X-User-Id")
+            );
+
+            String body = new String(
+                    exchange.getRequestBody().readAllBytes(),
+                    StandardCharsets.UTF_8
+            );
+
+            receivedBody.set(
+                    objectMapper.readValue(body, UpdateLinkRequest.class)
+            );
+
+            sendResponse(exchange, 200, """
+                    {
+                      "code": "abc123",
+                      "shortUrl": "http://localhost:8080/abc123",
+                      "originalUrl": "https://example.com",
+                      "clickLimit": 20,
+                      "clickCount": 1,
+                      "expiresAt": "2026-11-05T12:00:00Z",
+                      "userId": "%s"
+                    }
+                    """.formatted(userId));
+        });
+
+        LinkResponse response = client.updateLink(
+                "abc123",
+                new UpdateLinkRequest(20),
+                userId
+        );
+
+        assertEquals("PATCH", receivedMethod.get());
+        assertEquals(userId.toString(), receivedUserId.get());
+        assertEquals(20, receivedBody.get().clickLimit());
+
+        assertEquals("abc123", response.code());
+        assertEquals(20, response.clickLimit());
+        assertEquals(1, response.clickCount());
+    }
+
+    @Test
+    void shouldDeleteLink() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        AtomicReference<String> receivedMethod = new AtomicReference<>();
+        AtomicReference<String> receivedUserId = new AtomicReference<>();
+
+        server.createContext("/api/links/abc123", exchange -> {
+            receivedMethod.set(exchange.getRequestMethod());
+            receivedUserId.set(
+                    exchange.getRequestHeaders().getFirst("X-User-Id")
+            );
+
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        });
+
+        client.deleteLink("abc123", userId);
+
+        assertEquals("DELETE", receivedMethod.get());
+        assertEquals(userId.toString(), receivedUserId.get());
     }
 
     private void sendResponse(
