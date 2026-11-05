@@ -4,17 +4,17 @@ import picocli.CommandLine;
 import ru.mephi.promoit.urlshortener.cli.browser.DesktopBrowserLauncher;
 import ru.mephi.promoit.urlshortener.cli.client.UrlShortenerClient;
 import ru.mephi.promoit.urlshortener.cli.command.*;
+import ru.mephi.promoit.urlshortener.cli.config.CliConfig;
 import ru.mephi.promoit.urlshortener.cli.session.UserSession;
 import ru.mephi.promoit.urlshortener.cli.shell.InteractiveShell;
 
-import java.net.URI;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
         UrlShortenerClient client = new UrlShortenerClient(
-                URI.create("http://localhost:8080")
+                CliConfig.getApiUrl()
         );
 
         UserSession userSession = new UserSession();
