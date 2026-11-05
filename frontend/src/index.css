@@ -213,3 +213,62 @@ button:disabled {
     margin-left: 0;
   }
 }
+
+.notification-list {
+  margin-top: 48px;
+}
+
+.notification-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.notification-item {
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.notification-item.unread {
+  border-left: 4px solid #2563eb;
+}
+
+.notification-header,
+.notification-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.notification-header span,
+.notification-footer span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.notification-item p {
+  margin: 12px 0;
+}
+
+.notification-footer {
+  margin-top: 16px;
+}
+
+.notification-footer button {
+  width: auto;
+}
+
+.notification-read {
+  font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .notification-header,
+  .notification-footer {
+    flex-wrap: wrap;
+  }
+}

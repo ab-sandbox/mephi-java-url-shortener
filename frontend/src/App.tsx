@@ -4,6 +4,7 @@ import CreateLinkForm from "./components/CreateLinkForm";
 import LinkList from "./components/LinkList";
 import { getUserId } from "./utils/userSession";
 import type { LinkResponse } from "./types/links";
+import NotificationList from "./components/NotificationList";
 
 function App() {
   const [links, setLinks] = useState<LinkResponse[]>([]);
@@ -68,6 +69,8 @@ function App() {
       {loading && <p role="status">Refreshing links...</p>}
 
       <LinkList links={links} onUpdated={refreshLinks} />
+
+      <NotificationList />
     </main>
   );
 }
