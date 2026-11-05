@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.mephi.promoit.urlshortener.cli.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.cli.dto.LinkResponse;
+import ru.mephi.promoit.urlshortener.cli.dto.NotificationResponse;
 import ru.mephi.promoit.urlshortener.cli.dto.UpdateLinkRequest;
 import tools.jackson.databind.ObjectMapper;
 
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -247,6 +249,102 @@ class UrlShortenerClientTest {
 
         assertEquals("DELETE", receivedMethod.get());
         assertEquals(userId.toString(), receivedUserId.get());
+    }
+
+    @Test
+    void shouldListNotifications() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        AtomicReference<String> receivedMethod = new AtomicReference<>();
+        AtomicReference<String> receivedUserId = new AtomicReference<>();
+
+        server.createContext("/api/notifications", exchange -> {
+            receivedMethod.set(exchange.getRequestMethod());
+            receivedUserId.set(
+                    exchange.getRequestHeaders().getFirst("X-User-Id")
+            );
+
+            sendResponse(exchange, 200, """
+                    [
+                      {
+                        "id": 1,
+                        "shortCode": "abc123",
+                        "type": "CLICK_LIMIT_REACHED",
+                        "message": "Click limit reached",
+                        "createdAt": "2026-11-04T10:00:00Z",
+                        "readAt": null
+                      }
+                    ]
+                    """);
+        });
+
+        List<NotificationResponse> notifications =
+                client.listNotifications(userId);
+
+        assertEquals("GET", receivedMethod.get());
+        assertEquals(userId.toString(), receivedUserId.get());
+
+        assertEquals(1, notifications.size());
+        assertEquals(1L, notifications.getFirst().id());
+        assertEquals("abc123", notifications.getFirst().shortCode());
+        assertNull(notifications.getFirst().readAt());
+    }
+
+    @Test
+    void shouldListUnreadNotifications() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        AtomicReference<String> receivedPath = new AtomicReference<>();
+
+        server.createContext("/api/notifications/unread", exchange -> {
+            receivedPath.set(exchange.getRequestURI().getPath());
+
+            sendResponse(exchange, 200, "[]");
+        });
+
+        List<NotificationResponse> notifications =
+                client.listUnreadNotifications(userId);
+
+        assertEquals("/api/notifications/unread", receivedPath.get());
+        assertTrue(notifications.isEmpty());
+    }
+
+    @Test
+    void shouldMarkNotificationRead() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        AtomicReference<String> receivedMethod = new AtomicReference<>();
+        AtomicReference<String> receivedUserId = new AtomicReference<>();
+
+        server.createContext("/api/notifications/1/read", exchange -> {
+            receivedMethod.set(exchange.getRequestMethod());
+            receivedUserId.set(
+                    exchange.getRequestHeaders().getFirst("X-User-Id")
+            );
+
+            sendResponse(exchange, 200, """
+                    {
+                      "id": 1,
+                      "shortCode": "abc123",
+                      "type": "CLICK_LIMIT_REACHED",
+                      "message": "Click limit reached",
+                      "createdAt": "2026-11-04T10:00:00Z",
+                      "readAt": "2026-11-04T10:30:00Z"
+                    }
+                    """);
+        });
+
+        NotificationResponse notification =
+                client.markNotificationRead(1L, userId);
+
+        assertEquals("PATCH", receivedMethod.get());
+        assertEquals(userId.toString(), receivedUserId.get());
+
+        assertEquals(1L, notification.id());
+        assertEquals(
+                Instant.parse("2026-11-04T10:30:00Z"),
+                notification.readAt()
+        );
     }
 
     private void sendResponse(

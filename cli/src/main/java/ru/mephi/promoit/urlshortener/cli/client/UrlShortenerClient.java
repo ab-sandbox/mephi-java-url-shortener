@@ -2,6 +2,7 @@ package ru.mephi.promoit.urlshortener.cli.client;
 
 import ru.mephi.promoit.urlshortener.cli.dto.CreateLinkRequest;
 import ru.mephi.promoit.urlshortener.cli.dto.LinkResponse;
+import ru.mephi.promoit.urlshortener.cli.dto.NotificationResponse;
 import ru.mephi.promoit.urlshortener.cli.dto.UpdateLinkRequest;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -150,5 +151,76 @@ public class UrlShortenerClient {
                     + response.body()
             );
         }
+    }
+
+    public List<NotificationResponse> listNotifications(UUID userId)
+            throws IOException, InterruptedException {
+
+        return getNotifications("/api/notifications", userId);
+    }
+
+    public List<NotificationResponse> listUnreadNotifications(UUID userId)
+            throws IOException, InterruptedException {
+
+        return getNotifications("/api/notifications/unread", userId);
+    }
+
+    public NotificationResponse markNotificationRead(long id, UUID userId)
+            throws IOException, InterruptedException {
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(baseUrl.resolve("/api/notifications/" + id + "/read"))
+                .header("X-User-Id", userId.toString())
+                .method("PATCH", HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        HttpResponse<String> response = httpClient.send(
+                request,
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        if (response.statusCode() != 200) {
+            throw new IOException(
+                    "Failed to mark notification as read: HTTP "
+                    + response.statusCode()
+                    + " - " + response.body()
+            );
+        }
+
+        return objectMapper.readValue(
+                response.body(),
+                NotificationResponse.class
+        );
+    }
+
+    private List<NotificationResponse> getNotifications(
+            String path,
+            UUID userId
+    ) throws IOException, InterruptedException {
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(baseUrl.resolve(path))
+                .header("X-User-Id", userId.toString())
+                .GET()
+                .build();
+
+        HttpResponse<String> response = httpClient.send(
+                request,
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        if (response.statusCode() != 200) {
+            throw new IOException(
+                    "Failed to get notifications: HTTP "
+                    + response.statusCode()
+                    + " - " + response.body()
+            );
+        }
+
+        return objectMapper.readValue(
+                response.body(),
+                new TypeReference<List<NotificationResponse>>() {
+                }
+        );
     }
 }

@@ -17,6 +17,13 @@ public class Main {
 
         UserSession userSession = new UserSession();
 
+        CommandLine notificationsCommand = new CommandLine(
+                new NotificationsCommand()
+        )
+                .addSubcommand(new NotificationsListCommand(client, userSession))
+                .addSubcommand(new NotificationsUnreadCommand(client, userSession))
+                .addSubcommand(new NotificationsReadCommand(client, userSession));
+
         CommandLine commandLine = new CommandLine(new RootCommand())
                 .addSubcommand(new CreateLinkCommand(client, userSession))
                 .addSubcommand(new ListLinksCommand(client, userSession))
@@ -25,7 +32,8 @@ public class Main {
                         new DesktopBrowserLauncher()
                 ))
                 .addSubcommand(new UpdateLinkCommand(client, userSession))
-                .addSubcommand(new DeleteLinkCommand(client, userSession));
+                .addSubcommand(new DeleteLinkCommand(client, userSession))
+                .addSubcommand(notificationsCommand);
 
         int exitCode = commandLine.execute(args);
         System.exit(exitCode);
