@@ -26,7 +26,12 @@ public class Main {
         switch (mode) {
             case INTERACTIVE -> {
                 Scanner scanner = new Scanner(System.in);
-                new InteractiveShell(commandLine, scanner).run();
+
+                new InteractiveShell(
+                        commandLine,
+                        scanner,
+                        System.out
+                ).run();
             }
             case COMMAND -> {
                 int exitCode = commandLine.execute(args);

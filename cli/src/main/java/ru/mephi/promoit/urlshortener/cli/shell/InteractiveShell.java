@@ -2,38 +2,50 @@ package ru.mephi.promoit.urlshortener.cli.shell;
 
 import picocli.CommandLine;
 
+import java.io.PrintStream;
 import java.util.Scanner;
 
 public class InteractiveShell {
 
     private final CommandLine commandLine;
     private final Scanner scanner;
+    private final PrintStream out;
 
-    public InteractiveShell(CommandLine commandLine, Scanner scanner) {
+    public InteractiveShell(
+            CommandLine commandLine,
+            Scanner scanner,
+            PrintStream out
+    ) {
         this.commandLine = commandLine;
         this.scanner = scanner;
+        this.out = out;
     }
 
     public void run() {
         while (true) {
             printMenu();
 
+            if (!scanner.hasNextLine()) {
+                out.println("Goodbye!");
+                return;
+            }
+
             String input = scanner.nextLine().trim();
 
             MenuOption option = MenuOption.fromCode(input).orElse(null);
 
             if (option == null) {
-                System.out.println("Unknown option.");
+                out.println("Unknown option.");
                 continue;
             }
 
             if (option == MenuOption.EXIT) {
-                System.out.println("Goodbye!");
+                out.println("Goodbye!");
                 return;
             }
 
             execute(option);
-            System.out.println();
+            out.println();
         }
     }
 
@@ -51,17 +63,18 @@ public class InteractiveShell {
     }
 
     private void printMenu() {
-        System.out.println("=== URL Shortener ===");
+        out.println("=== URL Shortener ===");
 
         for (MenuOption option : MenuOption.values()) {
-            System.out.printf(
+            out.printf(
                     "%s. %s%n",
                     option.getCode(),
                     option.getDescription()
             );
         }
 
-        System.out.print("Select an option: ");
+        out.print("Select an option: ");
+        out.flush();
     }
 
     private void createLink() {
@@ -93,9 +106,9 @@ public class InteractiveShell {
     }
 
     private void notifications() {
-        System.out.println("1. All notifications");
-        System.out.println("2. Unread notifications");
-        System.out.println("3. Mark as read");
+        out.println("1. All notifications");
+        out.println("2. Unread notifications");
+        out.println("3. Mark as read");
 
         String choice = prompt("Select an option: ");
 
@@ -106,12 +119,13 @@ public class InteractiveShell {
                 String id = prompt("Notification ID: ");
                 commandLine.execute("notifications", "read", id);
             }
-            default -> System.out.println("Unknown option.");
+            default -> out.println("Unknown option.");
         }
     }
 
     private String prompt(String message) {
-        System.out.print(message);
+        out.print(message);
+        out.flush();
+
         return scanner.nextLine().trim();
-    }
-}
+    }}
