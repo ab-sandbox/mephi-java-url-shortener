@@ -61,3 +61,16 @@ export async function updateClickLimit(
 
   return response.json() as Promise<LinkResponse>;
 }
+
+export async function deleteLink(code: string, userId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(code)}`, {
+    method: "DELETE",
+    headers: {
+      "X-User-Id": userId,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete link: HTTP ${response.status}`);
+  }
+}

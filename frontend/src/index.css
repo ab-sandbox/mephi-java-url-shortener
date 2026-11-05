@@ -130,3 +130,86 @@ button:disabled {
 .secondary-button:hover {
   background: #cbd5e1;
 }
+
+.list-header,
+.link-header,
+.link-meta,
+.link-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.list-header,
+.link-header {
+  justify-content: space-between;
+}
+
+.list-header h2 {
+  margin: 0;
+}
+
+.list-header span {
+  color: #64748b;
+}
+
+.link-header {
+  flex-wrap: wrap;
+}
+
+.link-meta {
+  flex-wrap: wrap;
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.link-actions {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.link-actions button {
+  width: auto;
+}
+
+.link-actions .danger-button {
+  margin-left: auto;
+}
+
+.link-status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.link-status.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.link-status.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.danger-button {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.danger-button:hover {
+  background: #fecaca;
+}
+
+@media (max-width: 600px) {
+  .link-actions {
+    flex-wrap: wrap;
+  }
+
+  .link-actions .danger-button {
+    margin-left: 0;
+  }
+}

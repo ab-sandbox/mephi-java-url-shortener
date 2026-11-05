@@ -1,5 +1,4 @@
-import { useState } from "react";
-import EditClickLimit from "./EditClickLimit";
+import LinkItem from "./LinkItem";
 import type { LinkResponse } from "../types/links";
 
 interface LinkListProps {
@@ -8,53 +7,19 @@ interface LinkListProps {
 }
 
 function LinkList({ links, onUpdated }: LinkListProps) {
-  const [editingCode, setEditingCode] = useState<string | null>(null);
-
-  function handleUpdated() {
-    setEditingCode(null);
-    onUpdated();
-  }
-
   return (
     <section className="link-list">
-      <h2>My links</h2>
+      <div className="list-header">
+        <h2>My links</h2>
+        <span>{links.length} links</span>
+      </div>
 
       {links.length === 0 ? (
-        <p>No links yet.</p>
+        <p>No links yet. Create your first short link above.</p>
       ) : (
         <div className="link-items">
           {links.map((link) => (
-            <article key={link.code} className="link-item">
-              <a href={link.shortUrl} target="_blank" rel="noopener noreferrer">
-                {link.shortUrl}
-              </a>
-
-              <p className="original-url">{link.originalUrl}</p>
-
-              <p>
-                Clicks: {link.clickCount} / {link.clickLimit}
-              </p>
-
-              <p>Expires: {new Date(link.expiresAt).toLocaleString("ru-RU")}</p>
-
-              {editingCode === link.code ? (
-                <EditClickLimit
-                  link={link}
-                  onUpdated={handleUpdated}
-                  onCancel={() => setEditingCode(null)}
-                />
-              ) : (
-                <div className="link-actions">
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => setEditingCode(link.code)}
-                  >
-                    Edit limit
-                  </button>
-                </div>
-              )}
-            </article>
+            <LinkItem key={link.code} link={link} onChanged={onUpdated} />
           ))}
         </div>
       )}

@@ -65,11 +65,9 @@ function App() {
 
       {error && <p role="alert">{error}</p>}
 
-      {loading ? (
-        <p>Loading links...</p>
-      ) : (
-        <LinkList links={links} onUpdated={refreshLinks} />
-      )}
+      {loading && <p role="status">Refreshing links...</p>}
+
+      <LinkList links={links} onUpdated={refreshLinks} />
     </main>
   );
 }
