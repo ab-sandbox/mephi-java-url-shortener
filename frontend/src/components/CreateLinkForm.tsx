@@ -3,7 +3,11 @@ import { createLink } from "../api/linkApi";
 import { getUserId, saveUserId } from "../utils/userSession";
 import type { LinkResponse } from "../types/links";
 
-function CreateLinkForm() {
+interface CreateLinkFormProps {
+  onCreated: () => void;
+}
+
+function CreateLinkForm({ onCreated }: CreateLinkFormProps) {
   const [originalUrl, setOriginalUrl] = useState("");
   const [clickLimit, setClickLimit] = useState(10);
 
@@ -25,6 +29,8 @@ function CreateLinkForm() {
 
       setCreatedLink(link);
       setOriginalUrl("");
+
+      onCreated();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unexpected error");
     } finally {
@@ -80,7 +86,9 @@ function CreateLinkForm() {
             {createdLink.shortUrl}
           </a>
 
-          <p>Expires: {new Date(createdLink.expiresAt).toLocaleString()}</p>
+          <p>
+            Expires: {new Date(createdLink.expiresAt).toLocaleString("ru-RU")}
+          </p>
         </div>
       )}
     </section>

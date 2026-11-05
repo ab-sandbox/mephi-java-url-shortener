@@ -70,3 +70,34 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.link-list {
+  margin-top: 48px;
+}
+
+.link-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.link-item {
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.link-item a {
+  color: #2563eb;
+  overflow-wrap: anywhere;
+}
+
+.link-item p {
+  margin-bottom: 0;
+}
+
+.original-url {
+  color: #64748b;
+  overflow-wrap: anywhere;
+}

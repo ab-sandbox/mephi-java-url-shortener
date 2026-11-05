@@ -26,3 +26,17 @@ export async function createLink(
 
   return response.json() as Promise<LinkResponse>;
 }
+
+export async function getUserLinks(userId: string): Promise<LinkResponse[]> {
+  const response = await fetch(API_BASE_URL, {
+    headers: {
+      "X-User-Id": userId,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load links: HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<LinkResponse[]>;
+}
