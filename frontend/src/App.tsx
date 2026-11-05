@@ -7,7 +7,7 @@ import type { LinkResponse } from "./types/links";
 
 function App() {
   const [links, setLinks] = useState<LinkResponse[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -19,6 +19,8 @@ function App() {
 
       if (!userId) {
         setLinks([]);
+        setError(null);
+        setLoading(false);
         return;
       }
 
@@ -49,7 +51,7 @@ function App() {
     };
   }, [refreshKey]);
 
-  function handleLinkCreated() {
+  function refreshLinks() {
     setLoading(true);
     setRefreshKey((current) => current + 1);
   }
@@ -59,11 +61,15 @@ function App() {
       <h1>URL Shortener</h1>
       <p>Manage your short links in one place.</p>
 
-      <CreateLinkForm onCreated={handleLinkCreated} />
+      <CreateLinkForm onCreated={refreshLinks} />
 
       {error && <p role="alert">{error}</p>}
 
-      {loading ? <p>Loading links...</p> : <LinkList links={links} />}
+      {loading ? (
+        <p>Loading links...</p>
+      ) : (
+        <LinkList links={links} onUpdated={refreshLinks} />
+      )}
     </main>
   );
 }

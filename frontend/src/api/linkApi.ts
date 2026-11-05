@@ -40,3 +40,24 @@ export async function getUserLinks(userId: string): Promise<LinkResponse[]> {
 
   return response.json() as Promise<LinkResponse[]>;
 }
+
+export async function updateClickLimit(
+  code: string,
+  clickLimit: number,
+  userId: string,
+): Promise<LinkResponse> {
+  const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(code)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Id": userId,
+    },
+    body: JSON.stringify({ clickLimit }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update link: HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<LinkResponse>;
+}

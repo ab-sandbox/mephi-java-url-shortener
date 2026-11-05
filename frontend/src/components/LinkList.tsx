@@ -1,10 +1,20 @@
+import { useState } from "react";
+import EditClickLimit from "./EditClickLimit";
 import type { LinkResponse } from "../types/links";
 
 interface LinkListProps {
   links: LinkResponse[];
+  onUpdated: () => void;
 }
 
-function LinkList({ links }: LinkListProps) {
+function LinkList({ links, onUpdated }: LinkListProps) {
+  const [editingCode, setEditingCode] = useState<string | null>(null);
+
+  function handleUpdated() {
+    setEditingCode(null);
+    onUpdated();
+  }
+
   return (
     <section className="link-list">
       <h2>My links</h2>
@@ -26,6 +36,24 @@ function LinkList({ links }: LinkListProps) {
               </p>
 
               <p>Expires: {new Date(link.expiresAt).toLocaleString("ru-RU")}</p>
+
+              {editingCode === link.code ? (
+                <EditClickLimit
+                  link={link}
+                  onUpdated={handleUpdated}
+                  onCancel={() => setEditingCode(null)}
+                />
+              ) : (
+                <div className="link-actions">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setEditingCode(link.code)}
+                  >
+                    Edit limit
+                  </button>
+                </div>
+              )}
             </article>
           ))}
         </div>

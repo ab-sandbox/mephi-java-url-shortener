@@ -101,3 +101,32 @@ button:disabled {
   color: #64748b;
   overflow-wrap: anywhere;
 }
+
+.link-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.edit-form {
+  margin-top: 16px;
+  gap: 12px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.edit-actions button {
+  flex: 1;
+}
+
+.secondary-button {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.secondary-button:hover {
+  background: #cbd5e1;
+}
