@@ -5,8 +5,10 @@ import ru.mephi.promoit.urlshortener.cli.browser.DesktopBrowserLauncher;
 import ru.mephi.promoit.urlshortener.cli.client.UrlShortenerClient;
 import ru.mephi.promoit.urlshortener.cli.command.*;
 import ru.mephi.promoit.urlshortener.cli.session.UserSession;
+import ru.mephi.promoit.urlshortener.cli.shell.InteractiveShell;
 
 import java.net.URI;
+import java.util.Scanner;
 
 public class Main {
 
@@ -19,8 +21,18 @@ public class Main {
 
         CommandLine commandLine = createCommandLine(client, userSession);
 
-        int exitCode = commandLine.execute(args);
-        System.exit(exitCode);
+        RunMode mode = RunMode.fromArgs(args);
+
+        switch (mode) {
+            case INTERACTIVE -> {
+                Scanner scanner = new Scanner(System.in);
+                new InteractiveShell(commandLine, scanner).run();
+            }
+            case COMMAND -> {
+                int exitCode = commandLine.execute(args);
+                System.exit(exitCode);
+            }
+        }
     }
 
     private static CommandLine createCommandLine(
