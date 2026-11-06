@@ -1,4 +1,5 @@
 [![CI](https://github.com/ab-sandbox/mephi-java-url-shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/ab-sandbox/mephi-java-url-shortener/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ab-sandbox/mephi-java-url-shortener)](https://github.com/ab-sandbox/mephi-java-url-shortener/releases/latest)
 
 ## URL Shortener
 
@@ -21,6 +22,17 @@
 - Автоматическая очистка просроченных ссылок.
 - Веб-интерфейс для управления ссылками и уведомлениями.
 - Консольный клиент с командным и интерактивным режимами.
+
+### Релиз и документация
+
+Текущая стабильная версия — **[v1.0.0](https://github.com/ab-sandbox/mephi-java-url-shortener/releases/tag/v1.0.0)**.
+
+- [GitHub Releases](https://github.com/ab-sandbox/mephi-java-url-shortener/releases) — опубликованные версии и история
+  релизов.
+- [Frontend](frontend/README.md) — веб-интерфейс на React и TypeScript.
+- [CLI](cli/README.md) — консольный клиент на Java 21.
+- [GitHub Actions](https://github.com/ab-sandbox/mephi-java-url-shortener/actions/workflows/ci.yml) — результаты
+  автоматических проверок.
 
 ### Архитектура
 
@@ -202,6 +214,21 @@ cd frontend
 npm run lint
 npm run build
 ```
+
+## Автоматизация
+
+В проекте настроен CI на базе [GitHub Actions](.github/workflows/ci.yml).
+
+Проверки автоматически запускаются при push в `main` и создании pull request:
+
+- **Java:** сборка Maven, модульные и интеграционные тесты, включая Testcontainers.
+- **Frontend:** установка зависимостей, проверка ESLint и production-сборка React-приложения.
+
+Для согласованного форматирования исходного кода используется
+[EditorConfig](.editorconfig). Настройки задают кодировку UTF-8,
+окончания строк и правила отступов для Java, TypeScript, CSS и других файлов.
+
+Успешное выполнение CI подтверждает прохождение настроенных автоматических проверок.
 
 ### О проекте
 
