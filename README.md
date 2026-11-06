@@ -1,3 +1,5 @@
+[![CI](https://github.com/ab-sandbox/mephi-java-url-shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/ab-sandbox/mephi-java-url-shortener/actions/workflows/ci.yml)
+
 ## URL Shortener
 
 Сервис сокращения URL с ограничением количества переходов, временем жизни ссылок и системой уведомлений.
